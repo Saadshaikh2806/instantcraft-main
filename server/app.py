@@ -23,9 +23,9 @@ try:
     api_key = os.getenv('GOOGLE_API_KEY')
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in environment variables")
-    
+
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     print(f"Error initializing Gemini client: {str(e)}")
     traceback.print_exc()
@@ -46,7 +46,7 @@ def generate_website():
         data = request.json
         if not data:
             return jsonify({'error': 'No JSON data received'}), 400
-        
+
         description = data.get('description')
         if not description:
             return jsonify({'error': 'No description provided'}), 400
@@ -72,7 +72,7 @@ def generate_website():
         """
 
         print("Sending request to Gemini...")  # Debug log
-        
+
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
@@ -116,22 +116,22 @@ def modify_website():
 
         prompt = f"""
         Modify this website according to this description: {modification}
-        
+
         Current HTML:
         ```html
         {current_html}
         ```
-        
+
         Current CSS:
         ```css
         {current_css}
         ```
-        
+
         Current JavaScript:
         ```javascript
         {current_js}
         ```
-        
+
         Return only the modified HTML, CSS, and JavaScript code without any explanations.
         Format the response exactly as:
         ```html

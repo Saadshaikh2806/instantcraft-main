@@ -1,7 +1,8 @@
 from http.server import BaseHTTPRequestHandler
 import os
 import json
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 import traceback
 
@@ -12,9 +13,8 @@ try:
     api_key = os.getenv('GOOGLE_API_KEY')
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in environment variables")
-    
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.0-pro-latest')
+
+    client = genai.Client(api_key=api_key)
 except Exception as e:
     print(f"Error initializing Gemini client: {str(e)}")
     traceback.print_exc()
@@ -34,22 +34,22 @@ def handle_request(request_body):
 
         prompt = f"""
         Modify this website according to this description: {modification}
-        
+
         Current HTML:
         ```html
         {current_html}
         ```
-        
+
         Current CSS:
         ```css
         {current_css}
         ```
-        
+
         Current JavaScript:
         ```javascript
         {current_js}
         ```
-        
+
         Return only the modified HTML, CSS, and JavaScript code without any explanations.
         Format the response exactly as:
         ```html
@@ -65,9 +65,10 @@ def handle_request(request_body):
         The JavaScript code should be properly scoped and not interfere with the parent window.
         """
 
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
+        response = client.models.generate_content(
+            model='gemini-2.5-flash-preview-04-17',
+            contents=prompt,
+            config=types.GenerateContentConfig(
                 temperature=0.7,
                 top_p=0.8,
                 top_k=40,
@@ -89,16 +90,16 @@ class handler(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             request_body = self.rfile.read(content_length)
             data = json.loads(request_body)
-            
+
             response_data, status_code = handle_request(data)
-            
+
             self.send_response(status_code)
             self.send_header('Content-type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Access-Control-Allow-Methods', 'POST')
             self.send_header('Access-Control-Allow-Headers', 'Content-Type')
             self.end_headers()
-            
+
             self.wfile.write(json.dumps(response_data).encode())
         except Exception as e:
             self.send_response(500)
@@ -111,4 +112,4 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'POST')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers() 
+        self.end_headers()
