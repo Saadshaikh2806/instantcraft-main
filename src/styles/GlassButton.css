@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@900&display=swap');
+
+.glass-btn {
+  user-select: none;
+  font-size: clamp(1rem, 2vw + 0.5rem, 1.5rem);
+  width: 12em;
+  height: 3em;
+  border: 1px solid rgba(var(--accent-color-rgb), 0.3);
+  border-radius: 8px;
+  background: rgba(var(--accent-color-rgb), 0.1);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-btn:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--accent-color-rgb), 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.glass-btn:after {
+  content: '';
+  inset: 0;
+  top: 0.5em;
+  position: absolute;
+  background-image: linear-gradient(
+    105deg,
+    transparent 20%,
+    var(--accent-color-transparent) 20%,
+    var(--accent-color-transparent) 30%,
+    transparent 30%,
+    transparent 32%,
+    var(--accent-color-transparent) 5%,
+    var(--accent-color-transparent) 40%,
+    transparent 0%
+  );
+  background-size: 400% 100%;
+  background-position: 100% 0%;
+  transition: .3s ease;
+}
+
+.glass-btn:hover {
+  background: rgba(var(--accent-color-rgb), 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.glass-btn:hover::before {
+  left: 100%;
+}
+
+.glass-btn:active:after {
+  background-position: -50% 0%;
+}
+
+.glass-btn:active {
+  transform: translateY(1px);
+}
+
+.glass-btn:active:before {
+  height: 1em;
+}
