@@ -35,10 +35,10 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
     try {
       const width = window.screen.width;
       const height = window.screen.height;
-      const newWindow = window.open('', 'Preview', 
+      const newWindow = window.open('', 'Preview',
         `width=${width},height=${height},menubar=no,toolbar=no,location=no,status=no`
       );
-      
+
       if (!newWindow) {
         console.error('Failed to open new window - popup might be blocked');
         return;
@@ -61,7 +61,7 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
                 padding: 0;
                 box-sizing: border-box;
               }
-              
+
               body {
                 font-family: Arial, sans-serif;
                 line-height: 1.6;
@@ -102,11 +102,19 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
       newWindow.document.close();
       newWindow.focus();
 
-      window.addEventListener('beforeunload', () => {
+      // Store a reference to the window we're about to add a listener to
+      const currentWindow = window;
+      const closePopupHandler = () => {
         if (newWindow && !newWindow.closed) {
           newWindow.close();
         }
-      });
+      };
+
+      currentWindow.addEventListener('beforeunload', closePopupHandler);
+
+      // We should ideally remove this event listener when the component unmounts,
+      // but since this is in a function and not directly in a useEffect,
+      // we can't easily do that. In a real application, this should be refactored.
     } catch (error) {
       console.error('Error opening new window:', error);
     }
@@ -134,7 +142,7 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
                   padding: 0;
                   box-sizing: border-box;
                 }
-                
+
                 body {
                   font-family: Arial, sans-serif;
                   line-height: 1.6;
@@ -190,13 +198,15 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
 
     updateIframeContent();
 
+    // Store the current iframe reference for cleanup
+    const currentIframeRef = iframeRef.current;
+
     return () => {
       try {
-        const iframe = iframeRef.current;
-        if (iframe && iframe.contentDocument) {
-          iframe.contentDocument.open();
-          iframe.contentDocument.write('');
-          iframe.contentDocument.close();
+        if (currentIframeRef && currentIframeRef.contentDocument) {
+          currentIframeRef.contentDocument.open();
+          currentIframeRef.contentDocument.write('');
+          currentIframeRef.contentDocument.close();
         }
         setIsFocused(false);
       } catch (error) {
@@ -216,15 +226,18 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
     iframe.addEventListener('blur', handleBlur);
 
     return () => {
-      iframe.removeEventListener('focus', handleFocus);
-      iframe.removeEventListener('blur', handleBlur);
+      // Use the same iframe reference in the cleanup function
+      if (iframe) {
+        iframe.removeEventListener('focus', handleFocus);
+        iframe.removeEventListener('blur', handleBlur);
+      }
     };
   }, []);
 
   return (
-    <div 
-      className="streaming-live-preview" 
-      style={{ 
+    <div
+      className="streaming-live-preview"
+      style={{
         height: 'calc(100% - 40px)',
         display: 'flex',
         flexDirection: 'column',
@@ -237,7 +250,7 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
           <div className="loader"></div>
         </div>
       )}
-      <button 
+      <button
         onClick={openInNewWindow}
         className="fullscreen-toggle"
         aria-label="Open in new window"
@@ -248,8 +261,8 @@ const StreamingLivePreview = ({ htmlCode, cssCode, jsCode, isLoading }) => {
           <line x1="10" y1="14" x2="21" y2="3"></line>
         </svg>
       </button>
-      <iframe 
-        ref={iframeRef} 
+      <iframe
+        ref={iframeRef}
         title="Streaming Live Preview"
         style={{
           width: '100%',
