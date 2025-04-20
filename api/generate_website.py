@@ -1,24 +1,25 @@
 from http.server import BaseHTTPRequestHandler
-from flask import Response
 import os
 import json
-from google import genai
-from google.genai import types
-from dotenv import load_dotenv
+import google.generativeai as genai
 import traceback
+from dotenv import load_dotenv
 
 load_dotenv()
 
 # Initialize Gemini client
-try:
-    api_key = os.getenv('GOOGLE_API_KEY')
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY not found in environment variables")
+def get_client():
+    try:
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY not found in environment variables")
 
-    client = genai.Client(api_key=api_key)
-except Exception as e:
-    print(f"Error initializing Gemini client: {str(e)}")
-    traceback.print_exc()
+        genai.configure(api_key=api_key)
+        return genai.GenerativeModel('gemini-1.5-flash')
+    except Exception as e:
+        print(f"Error initializing Gemini client: {str(e)}")
+        traceback.print_exc()
+        raise
 
 def handle_request(request_body):
     try:
@@ -46,10 +47,10 @@ def handle_request(request_body):
         The JavaScript code should be properly scoped and not interfere with the parent window.
         """
 
-        response = client.models.generate_content(
-            model='gemini-2.5-flash-preview-04-17',
-            contents=prompt,
-            config=types.GenerateContentConfig(
+        model = get_client()
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
                 temperature=0.7,
                 top_p=0.8,
                 top_k=40,
@@ -60,6 +61,8 @@ def handle_request(request_body):
         return {'result': response.text}, 200
 
     except Exception as e:
+        print(f"Error in handle_request: {str(e)}")
+        traceback.print_exc()
         return {
             'error': str(e),
             'traceback': traceback.format_exc()
@@ -68,11 +71,14 @@ def handle_request(request_body):
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
+            print("Received POST request to generate_website")
             content_length = int(self.headers['Content-Length'])
             request_body = self.rfile.read(content_length)
             data = json.loads(request_body)
+            print(f"Request data: {data}")
 
             response_data, status_code = handle_request(data)
+            print(f"Response status: {status_code}")
 
             self.send_response(status_code)
             self.send_header('Content-type', 'application/json')
@@ -81,12 +87,21 @@ class handler(BaseHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Headers', 'Content-Type')
             self.end_headers()
 
-            self.wfile.write(json.dumps(response_data).encode())
+            response_json = json.dumps(response_data)
+            print(f"Sending response: {response_json[:100]}...")
+            self.wfile.write(response_json.encode())
         except Exception as e:
+            print(f"Error in handler.do_POST: {str(e)}")
+            traceback.print_exc()
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(json.dumps({'error': str(e)}).encode())
+            error_response = json.dumps({
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            })
+            self.wfile.write(error_response.encode())
 
     def do_OPTIONS(self):
         self.send_response(200)

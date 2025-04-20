@@ -109,6 +109,8 @@ export async function generateWebsite(description, onUpdate) {
       console.log('Received JSON response:', jsonResponse);
 
       if (jsonResponse.error) {
+        console.error('API error:', jsonResponse.error);
+        console.error('Traceback:', jsonResponse.traceback);
         throw new Error(jsonResponse.error);
       }
 
@@ -252,6 +254,8 @@ export async function modifyWebsite(modificationDescription, currentHtml, curren
       console.log('Received JSON response:', jsonResponse);
 
       if (jsonResponse.error) {
+        console.error('API error:', jsonResponse.error);
+        console.error('Traceback:', jsonResponse.traceback);
         throw new Error(jsonResponse.error);
       }
 

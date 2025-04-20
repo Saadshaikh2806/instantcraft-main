@@ -15,7 +15,7 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  
+
   // Save state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('userInput', userInput);
@@ -44,7 +44,8 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
         if (js) setJsCode(js);
       });
     } catch (err) {
-      setError('Failed to generate website: ' + err.message);
+      const errorMessage = err.message || 'Unknown error';
+      setError('Failed to generate website: ' + errorMessage);
       console.error('Error generating website:', err);
     } finally {
       setIsLoading(false);
@@ -71,7 +72,8 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
       });
     } catch (err) {
       console.error('Error details:', err);
-      setError(err.response?.data?.error || 'Failed to modify website. Please try again.');
+      const errorMessage = err.message || err.response?.data?.error || 'Unknown error';
+      setError('Failed to modify website: ' + errorMessage);
       console.error('Error modifying website:', err);
     } finally {
       setIsLoading(false);
@@ -85,7 +87,7 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
     localStorage.removeItem('htmlCode');
     localStorage.removeItem('cssCode');
     localStorage.removeItem('jsCode');
-    
+
     // Reset state
     setUserInput('');
     setModifyInput('');
@@ -102,34 +104,34 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
           <h2>WEBSITE DESCRIPTION</h2>
         </div>
         <div className="user-input-wrapper">
-          <UserInput 
-            value={userInput} 
-            onChange={setUserInput} 
+          <UserInput
+            value={userInput}
+            onChange={setUserInput}
             isLoading={isLoading}
           />
-          <button 
-            onClick={handleGenerateWebsite} 
+          <button
+            onClick={handleGenerateWebsite}
             disabled={isLoading}
           >
             {isLoading ? 'Generating...' : 'Generate Website'}
           </button>
         </div>
-        
+
         <h2>MODIFY WEBSITE</h2>
         <div className="modify-input-wrapper">
-          <ModifyWebsiteInput 
-            value={modifyInput} 
-            onChange={setModifyInput} 
+          <ModifyWebsiteInput
+            value={modifyInput}
+            onChange={setModifyInput}
             isLoading={isLoading}
           />
-          <button 
-            onClick={handleModifyWebsite} 
+          <button
+            onClick={handleModifyWebsite}
             disabled={isLoading || !htmlCode}
           >
             {isLoading ? 'Modifying...' : 'Modify Website'}
           </button>
         </div>
-        
+
         <div className="theme-toggle-container">
           <label className="theme-switch">
             <input
@@ -143,7 +145,7 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
             {isLightMode ? 'Light Mode' : 'Dark Mode'}
           </span>
         </div>
-        
+
         {error && <p className="error">{error}</p>}
       </div>
       <div className="preview-container">
@@ -163,7 +165,7 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
               </svg>
               Download Code
             </button>
-            <button 
+            <button
               onClick={handleClear}
               className="clear-button"
               title="Clear all content"
@@ -172,10 +174,10 @@ const LiveRenderer = ({ toggleMode, isLightMode }) => {
             </button>
           </div>
         </div>
-        <StreamingLivePreview 
-          htmlCode={htmlCode} 
-          cssCode={cssCode} 
-          jsCode={jsCode} 
+        <StreamingLivePreview
+          htmlCode={htmlCode}
+          cssCode={cssCode}
+          jsCode={jsCode}
           isLoading={isLoading}
         />
       </div>
